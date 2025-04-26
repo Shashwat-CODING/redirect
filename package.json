@@ -19,12 +19,20 @@
     },
     "mac": {
       "category": "public.app-category.music",
-      "target": ["dmg"],
-      "architecture": "universal"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
     },
     "win": {
-      "target": ["nsis"],
-      "architecture": ["x64"]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
     },
     "linux": {
       "target": ["deb"],
