@@ -1,0 +1,48 @@
+{
+  "name": "ytify-electron",
+  "version": "1.0.0",
+  "description": "Ytify Electron App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --mac --win --linux",
+    "build:mac": "electron-builder build --mac",
+    "build:win": "electron-builder build --win",
+    "build:linux": "electron-builder build --linux"
+  },
+  "build": {
+    "appId": "com.ytify.app",
+    "productName": "Ytify",
+    "icon": "icon.png",
+    "directories": {
+      "output": "installers"
+    },
+    "mac": {
+      "category": "public.app-category.music",
+      "target": ["dmg"],
+      "architecture": "universal"
+    },
+    "win": {
+      "target": ["nsis"],
+      "architecture": ["x64"]
+    },
+    "linux": {
+      "target": ["deb"],
+      "category": "Audio"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-serve": "^1.1.0",
+    "electron-store": "^8.1.0",
+    "node-fetch": "^2.6.9"
+  },
+  "devDependencies": {
+    "electron": "^25.8.0",
+    "electron-builder": "^24.6.4"
+  }
+}
