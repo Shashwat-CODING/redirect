@@ -2,6 +2,10 @@
   "name": "ytify-electron",
   "version": "1.0.0",
   "description": "Ytify Electron App",
+  "author": {
+    "name": "Ytify",
+    "email": "soder120@gmail.com"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
