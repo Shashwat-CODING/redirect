@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -14,12 +18,14 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
         
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18.x'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install
@@ -37,7 +43,8 @@ jobs:
         run: npm run build:linux
         
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: installers-${{ matrix.os }}
           path: installers/
+          retention-days: 5
