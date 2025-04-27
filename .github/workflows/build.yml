@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build Installers
 on:
   push:
     branches: [ main ]
@@ -15,6 +15,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true  # Enable LFS during checkout
+      
+      - name: Setup Git LFS
+        run: |
+          git lfs install
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,6 +30,14 @@ jobs:
           
       - name: Install dependencies
         run: npm install
+        
+      # Disable publishing to GitHub releases
+      - name: Disable publishing in package.json
+        run: |
+          if [ -f "package.json" ]; then
+            npx json -I -f package.json -e "this.build = this.build || {}; this.build.publish = null;"
+          fi
+        shell: bash
         
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
@@ -43,30 +57,48 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run build:linux -- --publish never
         
+      # Upload as artifacts (temporary storage during workflow)
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: installers-${{ matrix.os }}
           path: installers/
           retention-days: 5
 
-  create-release:
+  commit-installers:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true
+      
+      - name: Setup Git LFS
+        run: |
+          git lfs install
+          # Define LFS patterns for your large files
+          git lfs track "installers/*"
+          git add .gitattributes
+      
+      - name: Create installers directory
+        run: mkdir -p installers
         
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: downloaded-artifacts
           
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release v${{ github.run_number }}
-          tag_name: v${{ github.run_number }}
-          draft: false
-          prerelease: false
-          files: artifacts/**/*
+      - name: Move artifacts to installers directory
+        run: |
+          find downloaded-artifacts -type f -exec cp {} installers/ \;
+          ls -la installers/
+        
+      - name: Commit installers
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add installers/
+          git commit -m "Update installers [skip ci]" || echo "No changes to commit"
+          git push
