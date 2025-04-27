@@ -4,7 +4,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
 permissions:
-  contents: write  # Changed to write to allow creating releases
+  contents: write  # Need write permissions to commit back to the repo
   packages: write
 jobs:
   build:
@@ -27,30 +27,75 @@ jobs:
       - name: Install dependencies
         run: npm install
         
+      # Disable publishing to GitHub releases
+      - name: Disable publishing in package.json
+        run: |
+          if [ -f "package.json" ]; then
+            npx json -I -f package.json -e "this.build = this.build || {}; this.build.publish = null;"
+          fi
+        shell: bash
+        
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run build:mac
+        run: npm run build:mac -- --publish never
         
       - name: Build for Windows
         if: matrix.os == 'windows-latest'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run build:win
+        run: npm run build:win -- --publish never
         
       - name: Build for Linux
         if: matrix.os == 'ubuntu-latest'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npm run build:linux
+        run: npm run build:linux -- --publish never
         
+      # First consolidate all installers into a single location
+      - name: Create installers directory
+        if: always()
+        run: |
+          mkdir -p consolidated-installers
+          if [ -d "installers" ]; then
+            cp -r installers/* consolidated-installers/ || true
+          fi
+        shell: bash
+        
+      # Upload as artifacts (temporary storage during workflow)
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: installers-${{ matrix.os }}
-          path: installers/
+          path: consolidated-installers/
           retention-days: 5
+
+  commit-installers:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Create installers directory
+        run: mkdir -p installers
+        
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+          
+      - name: Move artifacts to installers directory
+        run: |
+          find downloaded-artifacts -type f -exec cp {} installers/ \;
+          ls -la installers/
+        
+      - name: Commit installers
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add installers/
+          git commit -m "Update installers [skip ci]" || echo "No changes to commit"
+          git push
