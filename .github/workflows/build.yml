@@ -1,14 +1,11 @@
 name: Build Installers
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 permissions:
-  contents: read
+  contents: write  # Changed to write to allow creating releases
   packages: write
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -33,18 +30,21 @@ jobs:
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
         env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run build:mac
         
       - name: Build for Windows
         if: matrix.os == 'windows-latest'
         env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run build:win
         
       - name: Build for Linux
         if: matrix.os == 'ubuntu-latest'
         env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Use the repository secret
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm run build:linux
         
