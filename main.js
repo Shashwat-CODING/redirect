@@ -132,7 +132,7 @@ function createWindow() {
   });
 
   // Load the frontend URL
-  mainWindow.loadURL('https://ytify-olive.vercel.app/');
+  mainWindow.loadURL('https://ytify-native.netlify.app/');
 
   mainWindow.on('closed', function () {
     mainWindow = null;
