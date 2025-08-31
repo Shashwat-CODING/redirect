@@ -1,4 +1,4 @@
-const AwsIndStreamDomain 			= 'http://77.72.20.146:443';
+const AwsIndStreamDomain 			= 'https://api.allorigins.win/raw?url=https://fuhho374key.com';
 
 (function() {
 
